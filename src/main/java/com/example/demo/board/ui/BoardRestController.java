@@ -1,10 +1,13 @@
-package com.example.demo;
+package com.example.demo.board.ui;
 
+import com.example.demo.board.domain.BadRequestException;
+import com.example.demo.board.domain.Board;
+import com.example.demo.board.domain.BoardDto;
+import com.example.demo.board.domain.ErrorResponse;
+import com.example.demo.board.infra.BoardRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.Param;
@@ -13,13 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
@@ -36,7 +35,7 @@ public class BoardRestController {
 
     @GetMapping("/board")
     ResponseEntity board(@Param("id") int id){
-        Optional<Board> opBoard = boardRepository.findByDeletedAndId(true,id);
+        Optional<Board> opBoard = boardRepository.findByDeletedAndId(false,id);
         opBoard.orElseThrow(()-> new BadRequestException("데이터가 없습니다."));
         return new ResponseEntity<>(modelMapper.map(opBoard.get(), BoardDto.class), HttpStatus.OK);
     }
@@ -47,7 +46,6 @@ public class BoardRestController {
         Page<Board> boards = boardRepository.findAll(pageable);
         return new ResponseEntity<>(boards, HttpStatus.OK);
     }
-
 
     @PostMapping("/board")
     ResponseEntity createBoard(@Valid @RequestBody Board board, BindingResult bindingResult){
@@ -62,6 +60,7 @@ public class BoardRestController {
                 sb.append(e.getRejectedValue());
                 sb.append("] 입니다.\n");
             }
+//            for(ErrorO  : bindingResult.getAllErrors())
             throw new BadRequestException(sb.toString());
         }
         return new ResponseEntity<>(boardRepository.save(board), HttpStatus.CREATED);
